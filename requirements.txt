@@ -1,12 +1,11 @@
-langchain-huggingface==0.1.2  # Critical for embeddings
+Flask==3.1.0
 langchain-community==0.3.18
 langchain-groq==0.2.4
-sentence-transformers==3.4.1
-transformers==4.49.0
-protobuf==3.20.3  # Must stay at this version
+langchain-huggingface==0.1.2  # Hyphen in package name, underscore in imports
 chromadb==0.6.3
-Flask==3.1.0
-gunicorn==23.0.0
+sentence-transformers==3.4.1
 pypdf==5.3.0
+protobuf==3.20.3
 python-dotenv==1.0.1
+gunicorn==23.0.0
 numpy==1.26.4

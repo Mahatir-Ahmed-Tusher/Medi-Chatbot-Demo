@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DiagnoBot - AI Health Assistant</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .header img {
+      width: 140px;
+      margin-bottom: 15px;
+    }
+    .chat-box {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      height: 500px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      background: #fafafa;
+    }
+    .message {
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      max-width: 85%;
+      clear: both;
+      line-height: 1.6;
+    }
+    .user-message {
+      background: #3498db;
+      color: white;
+      float: right;
+      text-align: right;
+    }
+    .bot-message {
+      background: #ffffff;
+      color: #2c3e50;
+      float: left;
+      text-align: left;
+      border: 1px solid #e0e0e0;
+    }
+    .bot-message h2 {
+      color: #2c3e50;
+      font-size: 1.3em;
+      margin: 15px 0 10px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #3498db;
+    }
+    .bot-message ul {
+      margin: 12px 0;
+      padding-left: 30px;
+      list-style-type: square;
+    }
+    .bot-message li {
+      margin-bottom: 10px;
+    }
+    .warning {
+      color: #e74c3c;
+      font-weight: 600;
+      margin: 8px 0;
+    }
+    .section {
+      margin-bottom: 25px;
+    }
+    .reference {
+      font-size: 0.9em;
+      color: #7f8c8d;
+      margin-top: 20px;
+    }
+    .input-area {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .input-area button {
+      padding: 12px 24px;
+      background: #2ecc71;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .input-area button:hover {
+      background: #27ae60;
+    }
+    .example-buttons {
+      margin: 20px 0;
+      text-align: center;
+    }
+    .example-buttons button {
+      margin: 6px;
+      padding: 8px 16px;
+      background: #95a5a6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .example-buttons button:hover {
+      background: #7f8c8d;
+    }
+    .disclaimer {
+      margin-top: 25px;
+      padding: 15px;
+      background: #fff3cd;
+      border-radius: 6px;
+      color: #856404;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="DiagnoBot Logo">
+      <h1>DiagnoBot - AI Health Assistant</h1>
+      <p>DiagnoBot is a side project of <strong>EarlyMed</strong> — empowering you with early health insights. <em>"Early Detection, Smarter Decision."</em></p>
+    </div>
+
+    <div id="chatBox" class="chat-box">
+      <div class="message bot-message">
+        <h2>Welcome to DiagnoBot</h2>
+        <p>Hello! I'm your empathetic medical assistant. How can I help you today?</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="userMessage" placeholder="Describe your symptoms or ask a health question...">
+      <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
+
+    <div class="example-buttons">
+      <h3>Common Symptom Examples</h3>
+      <button onclick="fillExample('Headache and fever for the past two days')">Headache and fever</button>
+      <button onclick="fillExample('I have slept enough yet I am having a bad headache accompanied by sensitivity to light')">Bad headache with light sensitivity</button>
+      <button onclick="fillExample('Chest pain and shortness of breath after minimal exertion')">Chest pain</button>
+      <button onclick="fillExample('Persistent fatigue and dizziness, especially when standing up quickly')">Fatigue and dizziness</button>
+      <button onclick="fillExample('Abdominal pain in the lower right side and nausea that worsens after eating')">Abdominal pain & nausea</button>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Important Disclaimer:</strong> Our DiagnoBot provides general health information and preliminary insights based on described symptoms. It should NOT be used for emergency situations or as a substitute for professional medical advice. The information provided is not a diagnosis. Always consult a qualified healthcare provider for personal health concerns. If you're experiencing severe symptoms, please seek immediate medical attention.
+    </div>
+  </div>
+
+  <script>
+    function formatBotResponse(text) {
+      const sections = text.split('## ');
+      let html = '';
+      
+      sections.forEach(section => {
+        if (!section.trim()) return;
+        
+        const [title, ...content] = section.split('\n');
+        const contentHtml = content.map(line => {
+          if (line.startsWith('*')) {
+            return `<li>${line.replace('*', '').trim()}</li>`;
+          }
+          if (line.includes('⚠️')) {
+            return `<div class="warning">${line}</div>`;
+          }
+          return `<p>${line}</p>`;
+        }).join('');
+        
+        html += `
+          <div class="section">
+            <h2>${title.trim()}</h2>
+            ${content[0]?.startsWith('*') ? `<ul>${contentHtml}</ul>` : contentHtml}
+          </div>
+        `;
+      });
+      
+      return html;
+    }
+
+    function sendMessage() {
+      const userInput = document.getElementById("userMessage").value.trim();
+      if (!userInput) return;
+
+      const chatBox = document.getElementById("chatBox");
+      
+      // User message
+      const userDiv = document.createElement("div");
+      userDiv.className = "message user-message";
+      userDiv.textContent = userInput;
+      chatBox.appendChild(userDiv);
+
+      // Bot message container
+      const botDiv = document.createElement("div");
+      botDiv.className = "message bot-message";
+
+      // Add temporary loading indicator
+      botDiv.innerHTML = "<p>Analyzing your symptoms...</p>";
+      chatBox.appendChild(botDiv);
+
+      fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userInput })
+      })
+      .then(response => response.json())
+      .then(data => {
+        botDiv.innerHTML = formatBotResponse(data.response);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      })
+      .catch(error => {
+        botDiv.innerHTML = "<p class='warning'>⚠️ Service temporarily unavailable. Please try again later.</p>";
+      });
+
+      document.getElementById("userMessage").value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Event listeners
+    document.getElementById("sendButton").addEventListener("click", sendMessage);
+    document.getElementById("userMessage").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    function fillExample(text) {
+      document.getElementById("userMessage").value = text;
+    }
+  </script>
+</body>
+</html>

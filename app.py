@@ -35,7 +35,14 @@ def create_db():
     # Create vector database
     loader = PyPDFLoader(pdf_path)
     docs = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    
+    # Modified text splitter configuration
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50,
+        separators=["\n\n", "\n", " ", ""]  # Explicit separators for PDF text
+    )
+    
     texts = text_splitter.split_documents(docs)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     

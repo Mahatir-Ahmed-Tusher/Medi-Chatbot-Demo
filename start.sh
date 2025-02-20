@@ -1,2 +1,3 @@
 #!/bin/bash
-gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 app:app
+echo "Starting server on port $PORT"
+gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 4 app:app

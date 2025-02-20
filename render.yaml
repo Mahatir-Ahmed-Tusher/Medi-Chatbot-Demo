@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: diagnobot
+    runtime: python
+    build:
+      pipInstallCommand: pip install -r requirements.txt
+    env: 
+      - key: GROQ_API_KEY
+        value: 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
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.6

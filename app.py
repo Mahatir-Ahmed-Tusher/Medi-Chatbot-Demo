@@ -13,25 +13,34 @@ app = Flask(__name__)
 # --- LLM, Database, and QA Chain Setup ---
 
 def initial_llm():
-    # Initialize ChatGroq with your API key and model name.
+    # Get API key from environment variables
+    groq_api_key = os.environ.get("GROQ_API_KEY")
+    if not groq_api_key:
+        raise ValueError("GROQ_API_KEY environment variable not set")
+    
+    # Initialize ChatGroq with API key and model name
     llm = ChatGroq(
         temperature=0,
-        groq_api_key="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",
+        groq_api_key=groq_api_key,
         model_name="llama-3.3-70b-versatile"
     )
     return llm
 
 def create_db():
-    pdf_path = "The_GALE_ENCYCLOPEDIA_of_MEDICINE_SECOND.pdf"
+    # Use absolute path for PDF file
+    pdf_path = os.path.join(os.getcwd(), "The_GALE_ENCYCLOPEDIA_of_MEDICINE_SECOND.pdf")
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"🚨 PDF file not found at: {pdf_path}")
     
+    # Create vector database
     loader = PyPDFLoader(pdf_path)
     docs = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     texts = text_splitter.split_documents(docs)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    db_path = "./chroma_db"
+    
+    # Use absolute path for ChromaDB
+    db_path = os.path.join(os.getcwd(), "chroma_db")
     vector_db = Chroma.from_documents(texts, embeddings, persist_directory=db_path)
     print("✅ ChromaDB created and medical data saved!")
     return vector_db
@@ -50,6 +59,7 @@ def setup_qachain(vector_db, llm):
 9. Keep the answers, diet plans India oriented, cause most of the users will be Indians.
 10. Provide mental health related guidelines as well, citing proper references.
 11. If users ask questions in bengali, respond them in bengali. If they ask questions in english, respond them in english.
+
 Context from medical resources:
 {context}
 Question: {question}
@@ -66,7 +76,7 @@ Response (structured with clear headings and bullet points when appropriate):"""
     return qa_chain
 
 # Initialize vector database and chain
-db_path = "./chroma_db"
+db_path = os.path.join(os.getcwd(), "chroma_db")
 if not os.path.exists(db_path):
     vector_db = create_db()
 else:
@@ -80,7 +90,6 @@ qa_chain = setup_qachain(vector_db, llm)
 
 @app.route("/")
 def home():
-    # Render the HTML frontend (placed in the "templates" folder)
     return render_template("index.html")
 
 @app.route("/chat", methods=["POST"])
@@ -97,5 +106,5 @@ def chat():
         return jsonify({"response": f"An error occurred: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
